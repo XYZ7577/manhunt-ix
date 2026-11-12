@@ -1,4 +1,13 @@
 export type GamePlayerStatus = 'survivor' | 'hunter';
+
+export const GAME_EVENT_PASSWORD_MIN_LENGTH = 12;
+export const GAME_EVENT_PASSWORD_MAX_LENGTH = 128;
+
+export interface GameEventSetup {
+    target: { latitude: number; longitude: number } | null;
+    pictureUrl: string | null;
+}
+
 export interface GamePlayerState {
     status: GamePlayerStatus;
     dead: boolean;
@@ -22,6 +31,7 @@ export interface GameDashboard {
     player: GamePlayerState;
     event: GameEventState;
     canManage?: boolean;
+    eventPasswordSet?: boolean;
     canManagePlayers?: boolean;
     hasTeam?: boolean;
     players?: Array<{
@@ -33,5 +43,4 @@ export interface GameDashboard {
         dead: boolean;
         immunityUntil: string | null;
     }>;
-    target?: { latitude: number; longitude: number };
 }

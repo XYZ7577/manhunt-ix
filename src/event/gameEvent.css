@@ -141,7 +141,8 @@
     max-width: 740px;
 }
 .game-guess-form > label,
-.game-setup > label,
+.game-setup-fields > label,
+.game-setup-fields .password-field > label,
 .game-player-search {
     display: grid;
     gap: 6px;
@@ -150,7 +151,8 @@
     font-weight: 600;
 }
 .game-event-panel input[type="url"],
-.game-event-panel input[type="search"] {
+.game-event-panel input[type="search"],
+.game-setup-fields .password-control input {
     width: 100%;
     min-height: 42px;
     padding: 9px 11px;
@@ -161,8 +163,12 @@
     font-size: 14px;
     font-weight: 400;
 }
+.game-setup-fields .password-control input {
+    padding-right: 72px;
+}
 .game-event-panel input[type="url"]:focus-visible,
-.game-event-panel input[type="search"]:focus-visible {
+.game-event-panel input[type="search"]:focus-visible,
+.game-setup-fields .password-control input:focus-visible {
     outline: 3px solid #8b659d;
     outline-offset: 1px;
 }
@@ -234,11 +240,18 @@
     border-top: 1px solid var(--line);
 }
 .game-setup,
+.game-setup-fields,
 .game-catch-tools {
     display: grid;
     gap: 12px;
     max-width: 760px;
 }
+.game-setup-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+.game-setup-hint,
 .game-setup > div p,
 .game-catch-tools > div:first-child p {
     margin: 0;

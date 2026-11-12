@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import type { GameDashboard } from '../../shared/event/game';
 import { ActionButton } from '../ui/ActionButton';
+import { GameEventSetup } from './GameEventSetup';
 import './gameEvent.css';
 
 interface Props {
@@ -21,9 +22,6 @@ function timeLabel(value: string | null | undefined) {
             minute: '2-digit',
         }).format(date) + ' SGT'
     );
-}
-function mapsLink(latitude: number, longitude: number) {
-    return `https://www.google.com/maps?q=${latitude},${longitude}`;
 }
 function activeImmunity(until: string | null, now: number) {
     return !!until && new Date(until).getTime() > now;
@@ -47,10 +45,6 @@ export function GamePanel({ game, admin, onChanged }: Props) {
         () => (game.serverNow ? new Date(game.serverNow).getTime() - Date.now() : 0),
         [game.serverNow],
     );
-    const [mapsUrl, setMapsUrl] = useState(
-        game.target ? mapsLink(game.target.latitude, game.target.longitude) : '',
-    );
-    const [pictureUrl, setPictureUrl] = useState(game.event.pictureUrl || '');
     const [guessUrl, setGuessUrl] = useState('');
     const [reward, setReward] = useState<Reward>('immunity');
     const [busy, setBusy] = useState(false);
@@ -63,10 +57,6 @@ export function GamePanel({ game, admin, onChanged }: Props) {
         const timer = window.setInterval(() => setNow(Date.now()), 1_000);
         return () => window.clearInterval(timer);
     }, []);
-    useEffect(() => {
-        setPictureUrl(game.event.pictureUrl || '');
-        if (game.target) setMapsUrl(mapsLink(game.target.latitude, game.target.longitude));
-    }, [game.event.pictureUrl, game.target?.latitude, game.target?.longitude]);
     useEffect(() => {
         if (!game.player.dead && reward === 'revive') setReward('immunity');
     }, [game.player.dead, reward]);
@@ -141,20 +131,6 @@ export function GamePanel({ game, admin, onChanged }: Props) {
                     : `Correct! Your immunity lasts until ${timeLabel(result.immunityUntil)}.`
                 : `That guess was outside 200 m.${typeof result.attemptsRemaining === 'number' ? ` ${result.attemptsRemaining} team ${result.attemptsRemaining === 1 ? 'guess' : 'guesses'} remaining.` : ''}`;
         }, 'Guess submitted.');
-    }
-    async function saveSetup(event: React.FormEvent<HTMLFormElement>) {
-        event.preventDefault();
-        await run(async () => {
-            const response = await fetch('/api/admin/game-event', {
-                method: 'PATCH',
-                credentials: 'same-origin',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ mapsUrl: mapsUrl.trim(), pictureUrl: pictureUrl.trim() || null }),
-            });
-            const body = (await response.json().catch(() => ({}))) as { error?: string };
-            if (!response.ok)
-                throw new Error(body.error || `Could not save event setup (${response.status}).`);
-        }, 'Geoguessr event setup saved.');
     }
     async function updatePlayers(players: typeof game.players, caught: boolean) {
         if (!players?.length) return;
@@ -361,48 +337,11 @@ export function GamePanel({ game, admin, onChanged }: Props) {
             {admin && (
                 <div className="game-admin-tools">
                     {game.canManage && (
-                        <form className="game-setup" onSubmit={saveSetup}>
-                            <div>
-                                <h3>Set up the event</h3>
-                                <p>
-                                    Choose the target pin and photo before 1:30 p.m. The target stays private
-                                    from players.
-                                </p>
-                            </div>
-                            <label>
-                                Google Maps link to the original location
-                                <input
-                                    type="url"
-                                    required
-                                    maxLength={2048}
-                                    value={mapsUrl}
-                                    onChange={(event) => setMapsUrl(event.target.value)}
-                                    placeholder="https://maps.google.com/?q=..."
-                                />
-                            </label>
-                            <label>
-                                Photo URL (optional)
-                                <input
-                                    type="url"
-                                    maxLength={2048}
-                                    value={pictureUrl}
-                                    onChange={(event) => setPictureUrl(event.target.value)}
-                                    placeholder="https://…"
-                                />
-                            </label>
-                            <ActionButton
-                                className="button primary"
-                                type="submit"
-                                disabled={busy || now + clockOffset >= start}
-                                unavailableReason={
-                                    now + clockOffset >= start
-                                        ? 'Event setup locks when guesses open at 1:30 p.m.'
-                                        : 'Wait for the current save to finish.'
-                                }
-                            >
-                                {busy ? 'Saving…' : 'Save event setup'}
-                            </ActionButton>
-                        </form>
+                        <GameEventSetup
+                            eventPasswordSet={game.eventPasswordSet ?? false}
+                            setupClosed={eventTime >= start}
+                            onChanged={onChanged}
+                        />
                     )}
                     {game.canManagePlayers && (
                         <div className="game-catch-tools">

@@ -1,5 +1,12 @@
 import type { Account } from '../../shared/types';
-import type { GameDashboard } from '../../shared/event/game';
+import {
+    GAME_EVENT_PASSWORD_MAX_LENGTH,
+    GAME_EVENT_PASSWORD_MIN_LENGTH,
+    type GameDashboard,
+    type GameEventSetup,
+} from '../../shared/event/game';
+import { passwordHash, passwordMatches } from '../accounts/passwords';
+import { privateJson as json } from '../http/responses';
 import type { CaughtNotificationEnv } from '../notifications/caughtNotifications';
 import { caughtNotificationStatements } from '../notifications/caughtNotifications';
 import { gameResultStatements } from './resultAnnouncement';
@@ -15,8 +22,8 @@ const MAIN_ADMIN_SQL = `SELECT 1 FROM accounts a JOIN account_approvals aa ON aa
   WHERE a.id=? AND a.role='admin' AND aa.status='approved' AND f.identifier=? COLLATE NOCASE`;
 const DEFAULT_START = '2026-11-13T05:30:00.000Z';
 const DEFAULT_END = '2026-11-13T06:00:00.000Z';
-const json = (data: unknown, status = 200) =>
-    Response.json(data, { status, headers: { 'Cache-Control': 'private, no-store' } });
+const EVENT_PASSWORD_ATTEMPTS = 10;
+const EVENT_PASSWORD_WINDOW_MS = 10 * 60_000;
 const isoNow = () => new Date().toISOString();
 const validCoord = (value: unknown, min: number, max: number): number | null =>
     typeof value === 'number' && Number.isFinite(value) && value >= min && value <= max ? value : null;
@@ -31,6 +38,11 @@ type ConfigRow = {
     winner_reward: 'revive' | 'immunity' | null;
     winner_immunity_until: string | null;
 };
+type DashboardConfigRow = Omit<ConfigRow, 'target_latitude' | 'target_longitude'> & {
+    configured: number;
+    password_set: number;
+};
+type EventPasswordRow = { password_salt: string | null; password_hash: string | null };
 type PlayerRow = { status: 'survivor' | 'hunter'; dead: number; immunity_until: string | null };
 async function playerState(db: D1Database, accountId: string, updatedAt = isoNow()): Promise<PlayerRow> {
     await db
@@ -53,15 +65,19 @@ export async function isPlayerDead(env: GameEnv, accountId: string): Promise<boo
 }
 async function isMainAdmin(env: GameEnv, account: Account): Promise<boolean> {
     const email = env.ADMIN_GOOGLE_EMAIL?.trim().toLowerCase();
-    return !!email && !!(await env.DB.prepare(MAIN_ADMIN_SQL).bind(account.id, email).first());
+    if (account.role !== 'admin' || !email) return false;
+    return !!(await env.DB.prepare(MAIN_ADMIN_SQL).bind(account.id, email).first());
 }
 export async function loadGameDash(env: GameEnv, actor: Account): Promise<GameDashboard> {
     const canManage = await isMainAdmin(env, actor);
     const [pl, eventcfg, grpGuess] = await Promise.all([
         playerState(env.DB, actor.id),
         env.DB.prepare(
-            'SELECT starts_at,ends_at,target_latitude,target_longitude,picture_url,winner_account_id,winner_reward,winner_immunity_until FROM game_event_config WHERE id=1',
-        ).first<ConfigRow>(),
+            `SELECT starts_at,ends_at,picture_url,winner_account_id,winner_reward,winner_immunity_until,
+              target_latitude IS NOT NULL AND target_longitude IS NOT NULL AS configured,
+              password_salt IS NOT NULL AND password_hash IS NOT NULL AS password_set
+             FROM game_event_config WHERE id=1`,
+        ).first<DashboardConfigRow>(),
         actor.groupId
             ? env.DB.prepare('SELECT COUNT(*) AS n FROM game_guesses WHERE group_id=?')
                   .bind(actor.groupId)
@@ -70,11 +86,12 @@ export async function loadGameDash(env: GameEnv, actor: Account): Promise<GameDa
     ]);
     const startsAt = eventcfg?.starts_at ?? DEFAULT_START;
     const endsAt = eventcfg?.ends_at ?? DEFAULT_END;
-    const configured = eventcfg?.target_latitude !== null && eventcfg?.target_latitude !== undefined;
+    const configured = !!eventcfg?.configured;
+    const serverNow = isoNow();
     const submissions = Number(grpGuess?.n ?? 0);
     const winner = eventcfg?.winner_account_id === actor.id;
     const result: GameDashboard = {
-        serverNow: isoNow(),
+        serverNow,
         hasTeam: !!actor.groupId,
         player: { status: pl.status, dead: pl.dead === 1, immunityUntil: pl.immunity_until },
         event: {
@@ -82,14 +99,14 @@ export async function loadGameDash(env: GameEnv, actor: Account): Promise<GameDa
             claimed: !!eventcfg?.winner_account_id,
             startsAt,
             endsAt,
-            pictureUrl: canManage || isoNow() >= startsAt ? (eventcfg?.picture_url ?? null) : null,
+            pictureUrl: serverNow >= startsAt ? (eventcfg?.picture_url ?? null) : null,
             submissions,
             attemptsRemaining: Math.max(0, 2 - submissions),
             canGuess:
                 !!actor.groupId &&
                 configured &&
-                isoNow() >= startsAt &&
-                isoNow() < endsAt &&
+                serverNow >= startsAt &&
+                serverNow < endsAt &&
                 !eventcfg?.winner_account_id &&
                 submissions < 2,
             winner,
@@ -99,6 +116,7 @@ export async function loadGameDash(env: GameEnv, actor: Account): Promise<GameDa
     };
     if (actor.role === 'admin') {
         result.canManage = canManage;
+        if (canManage) result.eventPasswordSet = !!eventcfg?.password_set;
         result.canManagePlayers = true;
         const players = await env.DB.prepare(
             `SELECT a.id,a.display_name,a.username,g.name AS group_name,COALESCE(s.status,'survivor') AS status,
@@ -115,14 +133,6 @@ export async function loadGameDash(env: GameEnv, actor: Account): Promise<GameDa
             dead: row.dead === 1,
             immunityUntil: row.immunity_until,
         }));
-    }
-    if (
-        canManage &&
-        eventcfg?.target_latitude !== null &&
-        eventcfg?.target_latitude !== undefined &&
-        eventcfg?.target_longitude !== null
-    ) {
-        result.target = { latitude: eventcfg.target_latitude, longitude: eventcfg.target_longitude };
     }
     return result;
 }
@@ -233,6 +243,71 @@ function parsePictureUrl(value: unknown): string | null | undefined {
     }
 }
 
+function validEventPassword(value: unknown): value is string {
+    return (
+        typeof value === 'string' &&
+        value.length >= GAME_EVENT_PASSWORD_MIN_LENGTH &&
+        value.length <= GAME_EVENT_PASSWORD_MAX_LENGTH &&
+        value.trim().length > 0
+    );
+}
+
+async function setEventPassword(db: D1Database, actorId: string, adminEmail: string, password: unknown) {
+    if (!validEventPassword(password)) {
+        return json(
+            { error: `Use a password of ${GAME_EVENT_PASSWORD_MIN_LENGTH}–${GAME_EVENT_PASSWORD_MAX_LENGTH} characters.` },
+            400,
+        );
+    }
+    const { salt, hash } = await passwordHash(password);
+    const update = await db.prepare(
+        `INSERT INTO game_event_config(id,starts_at,ends_at,updated_at,password_salt,password_hash)
+         SELECT 1,?,?,?,?,? WHERE EXISTS(${MAIN_ADMIN_SQL})
+         ON CONFLICT(id) DO UPDATE SET password_salt=excluded.password_salt,password_hash=excluded.password_hash
+         WHERE game_event_config.password_hash IS NULL`,
+    )
+        .bind(DEFAULT_START, DEFAULT_END, isoNow(), salt, hash, actorId, adminEmail)
+        .run();
+    if (!update.meta.changes) {
+        return json({ error: 'The event password could not be set. Refresh and try again.' }, 409);
+    }
+    return json({ passwordSet: true });
+}
+
+async function verifyEventPassword(
+    db: D1Database,
+    actorId: string,
+    credentials: EventPasswordRow | null,
+    password: unknown,
+): Promise<string | Response> {
+    if (!credentials?.password_hash || !credentials.password_salt) {
+        return json({ error: 'Set the revive event password first.' }, 409);
+    }
+    if (!validEventPassword(password)) return json({ error: 'Enter the correct revive event password.' }, 403);
+
+    const key = `revive-event-password:${actorId}`;
+    const now = Date.now();
+    const current = new Date(now).toISOString();
+    const expiry = new Date(now + EVENT_PASSWORD_WINDOW_MS).toISOString();
+    const attempt = await db.prepare(
+        `INSERT INTO auth_rate_buckets(bucket_key,count,expires_at) VALUES(?,1,?)
+         ON CONFLICT(bucket_key) DO UPDATE SET
+           count=CASE WHEN expires_at<=? THEN 1 ELSE count+1 END,
+           expires_at=CASE WHEN expires_at<=? THEN excluded.expires_at ELSE expires_at END
+         WHERE expires_at<=? OR count<?
+         RETURNING count`,
+    )
+        .bind(key, expiry, current, current, current, EVENT_PASSWORD_ATTEMPTS)
+        .first();
+    if (!attempt) return json({ error: 'Too many password attempts. Try again in a few minutes.' }, 429);
+    if (!(await passwordMatches(password, credentials.password_salt, credentials.password_hash))) {
+        return json({ error: 'Enter the correct revive event password.' }, 403);
+    }
+
+    await db.prepare('DELETE FROM auth_rate_buckets WHERE bucket_key=?').bind(key).run();
+    return credentials.password_hash;
+}
+
 export async function gameRoute(
     request: Request,
     env: GameEnv,
@@ -241,16 +316,53 @@ export async function gameRoute(
 ): Promise<Response | null> {
     const { pathname } = new URL(request.url),
         method = request.method.toUpperCase();
-    if (pathname === '/api/admin/game-event') {
-        if (method !== 'GET' && method !== 'PATCH') return json({ error: 'Method not allowed.' }, 405);
-        if (!(await isMainAdmin(env, actor)))
+    const eventSetup = pathname === '/api/admin/game-event';
+    const eventPassword = pathname === '/api/admin/game-event/password';
+    const eventUnlock = pathname === '/api/admin/game-event/unlock';
+    if (eventSetup || eventPassword || eventUnlock) {
+        const allowedMethods = eventSetup ? ['GET', 'PATCH'] : eventPassword ? ['PUT'] : ['POST'];
+        if (!allowedMethods.includes(method)) return json({ error: 'Method not allowed.' }, 405);
+
+        const adminEmail = env.ADMIN_GOOGLE_EMAIL?.trim().toLowerCase();
+        if (!adminEmail || !(await isMainAdmin(env, actor))) {
             return json({ error: 'Only the main administrator can manage the game event.' }, 403);
+        }
         if (method === 'GET') return json({ game: await loadGameDash(env, actor) });
+
         const body = (await request.json().catch(() => null)) as Record<string, unknown> | null;
-        if (!body) return json({ error: 'Enter the event location and settings.' }, 400);
-        let latitude = validCoord(body.latitude, -90, 90);
-        let longitude = validCoord(body.longitude, -180, 180);
-        if ((latitude === null || longitude === null) && typeof body.mapsUrl === 'string') {
+        const credentials = await env.DB.prepare(
+            'SELECT password_salt,password_hash FROM game_event_config WHERE id=1',
+        ).first<EventPasswordRow>();
+        if (eventPassword) {
+            if (credentials?.password_hash) {
+                return json({ error: 'The revive event password has already been set.' }, 409);
+            }
+            return setEventPassword(env.DB, actor.id, adminEmail, body?.password);
+        }
+
+        const verifiedHash = await verifyEventPassword(env.DB, actor.id, credentials, body?.password);
+        if (verifiedHash instanceof Response) return verifiedHash;
+        if (eventUnlock) {
+            const setup = await env.DB.prepare(
+                `SELECT target_latitude,target_longitude,picture_url FROM game_event_config
+                 WHERE id=1 AND password_hash=? AND EXISTS(${MAIN_ADMIN_SQL})`,
+            )
+                .bind(verifiedHash, actor.id, adminEmail)
+                .first<Pick<ConfigRow, 'target_latitude' | 'target_longitude' | 'picture_url'>>();
+            if (!setup) return json({ error: 'Event access changed. Refresh and try again.' }, 403);
+            const result: GameEventSetup = {
+                target:
+                    setup.target_latitude === null || setup.target_longitude === null
+                        ? null
+                        : { latitude: setup.target_latitude, longitude: setup.target_longitude },
+                pictureUrl: setup.picture_url,
+            };
+            return json(result);
+        }
+
+        let latitude = validCoord(body?.latitude, -90, 90);
+        let longitude = validCoord(body?.longitude, -180, 180);
+        if ((latitude === null || longitude === null) && typeof body?.mapsUrl === 'string') {
             const point = await resolveMapsUrl(body.mapsUrl);
             if (point) {
                 latitude = point.latitude;
@@ -259,45 +371,33 @@ export async function gameRoute(
         }
         if (latitude === null || longitude === null)
             return json({ error: 'Use a Google Maps link to a dropped pin with readable coordinates.' }, 400);
-        const start = DEFAULT_START,
-            end = DEFAULT_END,
-            picture = parsePictureUrl(body.pictureUrl);
-        if (
-            !start ||
-            !end ||
-            Date.parse(end) <= Date.parse(start) ||
-            Date.parse(end) - Date.parse(start) > 60 * 60 * 1000
-        )
-            return json({ error: 'Set a valid event window no longer than one hour.' }, 400);
+        const picture = parsePictureUrl(body?.pictureUrl);
         if (picture === undefined) return json({ error: 'Picture URL must be an HTTPS link.' }, 400);
-        const when = isoNow();
         const update = await env.DB.prepare(
-            `INSERT INTO game_event_config(id,starts_at,ends_at,target_latitude,target_longitude,picture_url,configured_by,updated_at)
-      SELECT 1,?,?,?,?,?,?,? WHERE strftime('%Y-%m-%dT%H:%M:%fZ','now')<? AND EXISTS(${MAIN_ADMIN_SQL})
-      ON CONFLICT(id) DO UPDATE SET starts_at=excluded.starts_at,ends_at=excluded.ends_at,target_latitude=excluded.target_latitude,
-        target_longitude=excluded.target_longitude,picture_url=excluded.picture_url,configured_by=excluded.configured_by,updated_at=excluded.updated_at
-      WHERE game_event_config.winner_account_id IS NULL AND NOT EXISTS(SELECT 1 FROM game_guesses)
-        AND strftime('%Y-%m-%dT%H:%M:%fZ','now')<game_event_config.starts_at AND EXISTS(${MAIN_ADMIN_SQL})`,
+            `UPDATE game_event_config SET starts_at=?,ends_at=?,target_latitude=?,target_longitude=?,
+                picture_url=?,configured_by=?,updated_at=?
+             WHERE id=1 AND password_hash=? AND winner_account_id IS NULL AND NOT EXISTS(SELECT 1 FROM game_guesses)
+               AND strftime('%Y-%m-%dT%H:%M:%fZ','now')<starts_at
+               AND strftime('%Y-%m-%dT%H:%M:%fZ','now')<? AND EXISTS(${MAIN_ADMIN_SQL})`,
         )
             .bind(
-                start,
-                end,
+                DEFAULT_START,
+                DEFAULT_END,
                 latitude,
                 longitude,
                 picture,
                 actor.id,
-                when,
-                start,
+                isoNow(),
+                verifiedHash,
+                DEFAULT_START,
                 actor.id,
-                env.ADMIN_GOOGLE_EMAIL!.trim().toLowerCase(),
-                actor.id,
-                env.ADMIN_GOOGLE_EMAIL!.trim().toLowerCase(),
+                adminEmail,
             )
             .run();
         if (!update.meta.changes)
             return json(
                 {
-                    error: 'The event is locked after the first guess or winner. Refresh to see the current setup.',
+                    error: 'Event setup is locked once guesses open. Refresh to see the current setup.',
                 },
                 409,
             );
@@ -398,7 +498,9 @@ export async function gameRoute(
         if (!point)
             return json({ error: 'Could not read coordinates from that Google Maps dropped-pin link.' }, 400);
         const submittedAt = isoNow();
-        const config = await env.DB.prepare('SELECT * FROM game_event_config WHERE id=1').first<ConfigRow>();
+        const config = await env.DB.prepare(
+            'SELECT starts_at,ends_at,target_latitude,target_longitude,winner_account_id FROM game_event_config WHERE id=1',
+        ).first<Pick<ConfigRow, 'starts_at' | 'ends_at' | 'target_latitude' | 'target_longitude' | 'winner_account_id'>>();
         if (
             config?.target_latitude === null ||
             config?.target_latitude === undefined ||

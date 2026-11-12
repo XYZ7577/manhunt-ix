@@ -24,6 +24,7 @@ import { parseCameraCapture, withCameraCapture } from './evidence/cameraCapture'
 import { handleFederatedAuth, type FederatedAuthEnv } from './accounts/federatedAuth';
 import { handleAccountSettings, type SettingsEnv } from './accounts/accountSettings';
 import { handleAccountRecovery, type AccountRecoveryEnv } from './accounts/accountRecovery';
+import { passwordHash, passwordMatches } from './accounts/passwords';
 import { emailOtpAvailable, handleEmailSignIn } from './accounts/emailSignIn';
 import { ensureGroupLeaders, handleGroupMembers } from './groups/groupMembership';
 import { handleEvidencePreview } from './evidence/evidencePreviews';
@@ -66,7 +67,6 @@ interface Env extends FederatedAuthEnv, SettingsEnv, AccountRecoveryEnv, PushEnv
     DEMO_MODE?: string;
 }
 const SESSION_MS = 14 * 24 * 60 * 60 * 1000;
-const ITERATIONS = 100_000;
 const UPLOAD_LIFETIME_MS = 24 * 60 * 60 * 1000;
 const COMPLETION_LOCK_MS = 10 * 60 * 1000;
 const SAFE_IMAGE_TYPES = new Set([
@@ -83,31 +83,11 @@ const encoder = new TextEncoder();
 const now = () => new Date().toISOString();
 const id = () => crypto.randomUUID();
 const b64 = (bytes: Uint8Array) => btoa(String.fromCharCode(...bytes));
-const unb64 = (value: string) => Uint8Array.from(atob(value), (c) => c.charCodeAt(0));
 const hex = (bytes: Uint8Array) => [...bytes].map((x) => x.toString(16).padStart(2, '0')).join('');
 
 async function digest(value: string) {
     return hex(new Uint8Array(await crypto.subtle.digest('SHA-256', encoder.encode(value))));
 }
-async function passwordHash(password: string, salt?: Uint8Array) {
-    const s: Uint8Array<ArrayBuffer> = new Uint8Array(salt ?? crypto.getRandomValues(new Uint8Array(16)));
-    const key = await crypto.subtle.importKey('raw', encoder.encode(password), 'PBKDF2', false, [
-        'deriveBits',
-    ]);
-    const bits = await crypto.subtle.deriveBits(
-        { name: 'PBKDF2', hash: 'SHA-256', salt: s, iterations: ITERATIONS },
-        key,
-        256,
-    );
-    return { salt: b64(s), hash: b64(new Uint8Array(bits)) };
-}
-async function passwordMatches(password: string, salt: string, expected: string) {
-    const actual = (await passwordHash(password, unb64(salt))).hash;
-    const a = unb64(actual),
-        b = unb64(expected);
-    return a.length === b.length && a.reduce((acc, value, i) => acc | (value ^ b[i]), 0) === 0;
-}
-
 function account(row: any): Account {
     return {
         id: row.id,
