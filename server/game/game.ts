@@ -24,6 +24,7 @@ const DEFAULT_START = '2026-11-13T05:30:00.000Z';
 const DEFAULT_END = '2026-11-13T06:00:00.000Z';
 const EVENT_PASSWORD_ATTEMPTS = 10;
 const EVENT_PASSWORD_WINDOW_MS = 10 * 60_000;
+const MAPS_PIN_PARAMS = new Set(['api', 'cid', 'ftid', 'q', 'query', 'query_place_id']);
 const isoNow = () => new Date().toISOString();
 const validCoord = (value: unknown, min: number, max: number): number | null =>
     typeof value === 'number' && Number.isFinite(value) && value >= min && value <= max ? value : null;
@@ -200,6 +201,9 @@ async function resolveMapsUrl(raw: string): Promise<{ latitude: number; longitud
     }
     if (url.protocol !== 'https:' || !['maps.app.goo.gl', 'goo.gl'].includes(url.hostname.toLowerCase()))
         return null;
+    for (const name of [...url.searchParams.keys()]) {
+        if (!MAPS_PIN_PARAMS.has(name)) url.searchParams.delete(name);
+    }
     const signal = AbortSignal.timeout(12_000);
     for (let redirect = 0; redirect < 5; redirect++) {
         try {
