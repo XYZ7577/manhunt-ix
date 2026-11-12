@@ -7,7 +7,7 @@ import './groupMembers.css';
 
 type Props = { groupId: string; refreshKey?: string; onChanged?: () => void | Promise<void> };
 
-async function reqGrpMemb<T>(path: string, method = 'GET', data?: unknown): Promise<T> {
+async function requestGroupMembers<T>(path: string, method = 'GET', data?: unknown): Promise<T> {
     return requestJson<T>(
         path,
         {
@@ -217,7 +217,7 @@ export function GroupMembers({ groupId, refreshKey, onChanged }: Props) {
     const [showDisbandConfirm, setShowDisbandConfirm] = useState(false);
     const [disbandAcknowledged, setDisbandAcknowledged] = useState(false);
     const [disbandCode, setDisbandCode] = useState('');
-    const [codeexpireat, setCodeexpireat] = useState('');
+    const [disbandCodeExpiresAt, setDisbandCodeExpiresAt] = useState('');
     const [disbandCodeEmail, setDisbandCodeEmail] = useState('');
 
     const membersPath = `/api/groups/${encodeURIComponent(groupId)}/members`;
@@ -225,7 +225,7 @@ export function GroupMembers({ groupId, refreshKey, onChanged }: Props) {
         setLoading(true);
         setError('');
         try {
-            const result = await reqGrpMemb<GroupMembersResponse>(membersPath);
+            const result = await requestGroupMembers<GroupMembersResponse>(membersPath);
             setData(result);
             setLeaderCandidate('');
             setConfirmLeader('');
@@ -296,7 +296,7 @@ export function GroupMembers({ groupId, refreshKey, onChanged }: Props) {
         const success = await mutate(
             'invite',
             async () => {
-                const result = await reqGrpMemb<{
+                const result = await requestGroupMembers<{
                     invitation: { id: string };
                     joinPath?: string;
                     emailDelivery?: EmailDelivery;
@@ -323,7 +323,7 @@ export function GroupMembers({ groupId, refreshKey, onChanged }: Props) {
             !(await mutate(
                 `link:${invitationId}`,
                 async () => {
-                    const result = await reqGrpMemb<{
+                    const result = await requestGroupMembers<{
                         joinPath: string;
                         emailDelivery?: EmailDelivery;
                     }>(`${membersPath}/invitations/${encodeURIComponent(invitationId)}/link`, 'POST', {});
@@ -345,7 +345,7 @@ export function GroupMembers({ groupId, refreshKey, onChanged }: Props) {
     function revoke(invitationId: string) {
         void mutate(
             `revoke:${invitationId}`,
-            () => reqGrpMemb(`${membersPath}/invitations/${encodeURIComponent(invitationId)}`, 'DELETE'),
+            () => requestGroupMembers(`${membersPath}/invitations/${encodeURIComponent(invitationId)}`, 'DELETE'),
             'Invitation cancelled.',
         );
     }
@@ -358,7 +358,7 @@ export function GroupMembers({ groupId, refreshKey, onChanged }: Props) {
         void mutate(
             'leader',
             () =>
-                reqGrpMemb(`${membersPath}/leader`, 'POST', {
+                requestGroupMembers(`${membersPath}/leader`, 'POST', {
                     accountId,
                     previousLeaderAccountId: data.leaderAccountId,
                 }),
@@ -373,7 +373,7 @@ export function GroupMembers({ groupId, refreshKey, onChanged }: Props) {
         setError('');
         setNotice('');
         try {
-            await reqGrpMemb(`${membersPath}/disband`, 'POST', { code: disbandCode });
+            await requestGroupMembers(`${membersPath}/disband`, 'POST', { code: disbandCode });
             setData((current) =>
                 current
                     ? { ...current, disbanded: true, canManageMembers: false, members: [], invitations: [] }
@@ -383,9 +383,7 @@ export function GroupMembers({ groupId, refreshKey, onChanged }: Props) {
             setDisbandCode('');
             setDisbandAcknowledged(false);
             await onChanged?.();
-            setNotice(
-                'The team has been disbanded. All players have left the team; its submission history is preserved.',
-            );
+            setNotice('The team has been disbanded. Everyone now has their own group and is its leader.');
         } catch (cause) {
             setError(cause instanceof Error ? cause.message : 'The team could not be disbanded.');
         } finally {
@@ -398,12 +396,12 @@ export function GroupMembers({ groupId, refreshKey, onChanged }: Props) {
         setError('');
         setNotice('');
         try {
-            const result = await reqGrpMemb<{ sent: true; expiresAt: string; email: string }>(
+            const result = await requestGroupMembers<{ sent: true; expiresAt: string; email: string }>(
                 `${membersPath}/disband/code`,
                 'POST',
                 {},
             );
-            setCodeexpireat(result.expiresAt);
+            setDisbandCodeExpiresAt(result.expiresAt);
             setDisbandCodeEmail(result.email);
             setDisbandCode('');
             setDisbandAcknowledged(false);
@@ -746,8 +744,9 @@ export function GroupMembers({ groupId, refreshKey, onChanged }: Props) {
                                 >
                                     <h3 id="group-disband-heading">Disband this team</h3>
                                     <p>
-                                        This removes every player from the team, cancels pending invitations,
-                                        and stops active uploads. Past submissions and evidence stay in the
+                                        Everyone in the team, including you, will move into a new group named
+                                        after them and become its leader. Pending invitations will be cancelled
+                                        and active uploads will stop. Past submissions and evidence stay in the
                                         event history. This cannot be undone.
                                     </p>
                                     {!data.emailVerificationAvailable && (
@@ -789,7 +788,9 @@ export function GroupMembers({ groupId, refreshKey, onChanged }: Props) {
                                                 Enter the 6-digit code sent to{' '}
                                                 {disbandCodeEmail || data.disbandVerificationEmail}. It
                                                 expires{' '}
-                                                {codeexpireat ? dateLabel(codeexpireat) : 'in 10 minutes'}.
+                                                {disbandCodeExpiresAt
+                                                    ? dateLabel(disbandCodeExpiresAt)
+                                                    : 'in 10 minutes'}.
                                                 Wait 60 seconds before requesting another code.
                                             </p>
                                             <label className="group-disband-ack">
@@ -801,8 +802,8 @@ export function GroupMembers({ groupId, refreshKey, onChanged }: Props) {
                                                     }
                                                     disabled={!!busy}
                                                 />{' '}
-                                                I understand that all players will leave and this action
-                                                cannot be undone.
+                                                I understand that each player will move to a new group they
+                                                lead and this action cannot be undone.
                                             </label>
                                             <label htmlFor="group-disband-code">
                                                 6-digit email verification code
@@ -872,7 +873,7 @@ export function GroupMembers({ groupId, refreshKey, onChanged }: Props) {
                                                         setShowDisbandConfirm(false);
                                                         setDisbandAcknowledged(false);
                                                         setDisbandCode('');
-                                                        setCodeexpireat('');
+                                                        setDisbandCodeExpiresAt('');
                                                         setDisbandCodeEmail('');
                                                     }}
                                                 >

@@ -801,8 +801,19 @@ async function disbandGroup(
     const verified = await verifyGroupDisbandCode(env, account.id, groupId, code);
     if (!verified.ok) return fail(verified.error, verified.status);
 
-    const timestamp = now();
-    const ticket = env.DB.prepare(
+    const { results: players } = await env.DB.prepare(
+        "SELECT id FROM accounts WHERE group_id=? AND role='player'",
+    )
+        .bind(groupId)
+        .all<{ id: string }>();
+    const newGroupIdsByPlayerJson = JSON.stringify(
+        Object.fromEntries(players.map(({ id }) => [id, crypto.randomUUID()])),
+    );
+    const groupNameSuffix = "'s group";
+    const disbandedAt = now();
+    const disbandRecordBindings = [groupId, account.id, disbandedAt] as const;
+    const disbandRecordExists = `EXISTS(SELECT 1 FROM group_disbands WHERE group_id=? AND disbanded_by=? AND disbanded_at=?)`;
+    const recordDisband = env.DB.prepare(
         `INSERT INTO group_disbands(group_id,disbanded_by,disbanded_at)
     SELECT g.id,?,? FROM groups g JOIN accounts actor ON actor.id=?
     JOIN group_leaders gl ON gl.group_id=g.id AND gl.account_id=actor.id
@@ -815,20 +826,19 @@ async function disbandGroup(
         OR EXISTS(SELECT 1 FROM federated_identities f WHERE f.account_id=actor.id AND f.provider='google' AND f.identifier=? COLLATE NOCASE))`,
     ).bind(
         account.id,
-        timestamp,
+        disbandedAt,
         account.id,
         groupId,
         verified.challengeId,
         verified.email,
-        timestamp,
-        timestamp,
+        disbandedAt,
+        disbandedAt,
         verified.email,
         verified.email,
     );
     try {
-        const results = await env.DB.batch([
-            env.DB.prepare(
-                `UPDATE group_disband_challenges SET consumed_at=? WHERE group_id=? AND account_id=? AND challenge_id=?
+        const consumeVerificationCode = env.DB.prepare(
+            `UPDATE group_disband_challenges SET consumed_at=? WHERE group_id=? AND account_id=? AND challenge_id=?
         AND email_snapshot=? COLLATE NOCASE AND consumed_at IS NULL AND expires_at>? AND attempts<=5
         AND EXISTS(SELECT 1 FROM accounts actor JOIN account_approvals aa ON aa.account_id=actor.id AND aa.status='approved'
           JOIN group_leaders gl ON gl.group_id=group_disband_challenges.group_id AND gl.account_id=actor.id
@@ -837,39 +847,75 @@ async function disbandGroup(
             AND NOT EXISTS(SELECT 1 FROM account_deletions d WHERE d.account_id=actor.id)
             AND (EXISTS(SELECT 1 FROM account_emails e WHERE e.account_id=actor.id AND e.email=group_disband_challenges.email_snapshot COLLATE NOCASE AND e.verified_at IS NOT NULL)
               OR EXISTS(SELECT 1 FROM federated_identities f WHERE f.account_id=actor.id AND f.provider='google' AND f.identifier=group_disband_challenges.email_snapshot COLLATE NOCASE)))`,
-            ).bind(timestamp, groupId, account.id, verified.challengeId, verified.email, timestamp),
-            ticket,
-            env.DB.prepare(
-                `DELETE FROM group_leaders WHERE group_id=? AND EXISTS(SELECT 1 FROM group_disbands d WHERE d.group_id=? AND d.disbanded_by=? AND d.disbanded_at=?)`,
-            ).bind(groupId, groupId, account.id, timestamp),
-            env.DB.prepare(
-                `UPDATE accounts SET group_id=NULL WHERE group_id=? AND role='player'
-        AND EXISTS(SELECT 1 FROM group_disbands d WHERE d.group_id=? AND d.disbanded_by=? AND d.disbanded_at=?)`,
-            ).bind(groupId, groupId, account.id, timestamp),
-            env.DB.prepare(
-                `UPDATE group_invitations SET status='revoked' WHERE group_id=? AND status='pending'
-        AND EXISTS(SELECT 1 FROM group_disbands d WHERE d.group_id=? AND d.disbanded_by=? AND d.disbanded_at=?)`,
-            ).bind(groupId, groupId, account.id, timestamp),
-            env.DB.prepare(
-                `UPDATE upload_sessions SET state='aborted',lock_token=NULL,lock_expires_at=NULL
-        WHERE state IN ('creating','uploading','completing') AND submission_id IN (SELECT id FROM submissions WHERE group_id=?)
-          AND EXISTS(SELECT 1 FROM group_disbands d WHERE d.group_id=? AND d.disbanded_by=? AND d.disbanded_at=?)`,
-            ).bind(groupId, groupId, account.id, timestamp),
-            env.DB.prepare(
-                `UPDATE groups SET members_json='[]' WHERE id=?
-        AND EXISTS(SELECT 1 FROM group_disbands d WHERE d.group_id=? AND d.disbanded_by=? AND d.disbanded_at=?)`,
-            ).bind(groupId, groupId, account.id, timestamp),
+        ).bind(disbandedAt, groupId, account.id, verified.challengeId, verified.email, disbandedAt);
+        const removeOldLeader = env.DB.prepare(
+            `DELETE FROM group_leaders WHERE group_id=? AND ${disbandRecordExists}`,
+        ).bind(groupId, ...disbandRecordBindings);
+        const createPersonalGroups = env.DB.prepare(
+            `INSERT INTO groups(id,name,members_json,created_at)
+             SELECT new_group.value,substr(player.display_name,1,?)||?,json_array(player.display_name),?
+             FROM accounts player JOIN json_each(?) new_group ON new_group.key=player.id
+             WHERE player.group_id=? AND player.role='player' AND ${disbandRecordExists}`,
+        ).bind(
+            60 - groupNameSuffix.length,
+            groupNameSuffix,
+            disbandedAt,
+            newGroupIdsByPlayerJson,
+            groupId,
+            ...disbandRecordBindings,
+        );
+        const movePlayersToPersonalGroups = env.DB.prepare(
+            `UPDATE accounts SET group_id=new_group.value
+             FROM json_each(?) new_group
+             WHERE accounts.id=new_group.key AND accounts.group_id=? AND accounts.role='player'
+               AND ${disbandRecordExists}`,
+        ).bind(newGroupIdsByPlayerJson, groupId, ...disbandRecordBindings);
+        const makePlayersLeaders = env.DB.prepare(
+            `INSERT INTO group_leaders(group_id,account_id,created_at)
+             SELECT player.group_id,player.id,?
+             FROM accounts player JOIN json_each(?) new_group
+               ON new_group.key=player.id AND new_group.value=player.group_id
+             WHERE player.role='player' AND ${disbandRecordExists}`,
+        ).bind(disbandedAt, newGroupIdsByPlayerJson, ...disbandRecordBindings);
+        // If a late joiner is left behind, the invalid leader insert rolls back the batch.
+        const requireAllPlayersMoved = env.DB.prepare(
+            `INSERT INTO group_leaders(group_id,account_id,created_at)
+             SELECT ?,NULL,? WHERE ${disbandRecordExists}
+               AND EXISTS(SELECT 1 FROM accounts WHERE group_id=? AND role='player')`,
+        ).bind(groupId, disbandedAt, ...disbandRecordBindings, groupId);
+        const revokePendingInvitations = env.DB.prepare(
+            `UPDATE group_invitations SET status='revoked'
+             WHERE group_id=? AND status='pending' AND ${disbandRecordExists}`,
+        ).bind(groupId, ...disbandRecordBindings);
+        const abortActiveUploads = env.DB.prepare(
+            `UPDATE upload_sessions SET state='aborted',lock_token=NULL,lock_expires_at=NULL
+             WHERE state IN ('creating','uploading','completing')
+               AND submission_id IN (SELECT id FROM submissions WHERE group_id=?)
+               AND ${disbandRecordExists}`,
+        ).bind(groupId, ...disbandRecordBindings);
+        const clearOldRoster = env.DB.prepare(
+            `UPDATE groups SET members_json='[]' WHERE id=? AND ${disbandRecordExists}`,
+        ).bind(groupId, ...disbandRecordBindings);
+
+        const [verificationResult, disbandResult] = await env.DB.batch([
+            consumeVerificationCode,
+            recordDisband,
+            removeOldLeader,
+            createPersonalGroups,
+            movePlayersToPersonalGroups,
+            makePlayersLeaders,
+            requireAllPlayersMoved,
+            revokePendingInvitations,
+            abortActiveUploads,
+            clearOldRoster,
         ]);
-        if (!results[0]?.meta.changes || !results[1]?.meta.changes)
+        if (!verificationResult?.meta.changes || !disbandResult?.meta.changes)
             return fail(
                 'Group leadership or verified email changed, or the code expired. Request a new code.',
                 409,
             );
     } catch {
-        return fail(
-            'Group leadership or verified email changed, or the code expired. Request a new code.',
-            409,
-        );
+        return fail('The team changed before it could be disbanded. Refresh and try again.', 409);
     }
     return json({ disbanded: true, groupId });
 }
