@@ -1,6 +1,8 @@
 # Manhunt IX
 # this readme is AI-generated
 
+DISCLAIMER: PART OF THIS PROJECT IS MADE WITH AI ASSISTANCE.
+
 A group challenge portal for Manhunt IX on **13 November 2026**. Players follow their event overview, share task progress, upload original evidence, and receive organiser review updates. Admins review task requirements and date-check flags before crediting a group. The project runs locally and on [Cloudflare Workers](https://manhunt.xyz2011a.workers.dev/). See [deployment and verification](docs/operations/deployment.md).
 
 ## Project layout
