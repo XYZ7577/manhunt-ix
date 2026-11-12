@@ -1,0 +1,122 @@
+.invitation-page {
+    display: grid;
+    min-height: 100vh;
+    place-items: center;
+    padding: 24px;
+    background: var(--page);
+}
+.invitation-card {
+    display: grid;
+    gap: 16px;
+    width: min(100%, 500px);
+    padding: 28px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--surface);
+}
+.invitation-page-brand {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+.invitation-page-brand > span {
+    color: var(--muted);
+    font-size: 12px;
+}
+.invitation-card h1 {
+    margin: 0;
+    font-size: 25px;
+}
+.invitation-card > p {
+    margin: 0;
+    color: var(--muted);
+    line-height: 1.55;
+}
+.invitation-group {
+    display: grid;
+    gap: 4px;
+    padding: 16px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--page);
+}
+.invitation-group > span,
+.invitation-group > small {
+    color: var(--muted);
+    font-size: 13px;
+}
+.invitation-group > strong {
+    font-size: 21px;
+    overflow-wrap: anywhere;
+}
+.invitation-invalid {
+    padding: 14px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--page);
+    line-height: 1.5;
+}
+.invitation-invalid p {
+    margin: 5px 0 0;
+    color: var(--muted);
+}
+.invitation-success {
+    display: grid;
+    gap: 5px;
+    padding: 14px;
+    border: 1px solid #82cf96;
+    border-radius: 6px;
+    background: #dafbe1;
+    color: #116329;
+}
+.invitation-success span {
+    color: #1a7f37;
+    font-size: 13px;
+}
+.invitation-secondary-link {
+    justify-self: start;
+}
+.invitation-unavailable {
+    padding: 12px;
+    border: 1px solid #bf8700;
+    border-radius: 6px;
+    background: #fff8c5;
+    color: #633c01 !important;
+}
+.invitation-continue {
+    justify-self: start;
+    min-width: 210px;
+    min-height: 44px;
+}
+.invitation-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+.invitation-actions .invitation-continue {
+    cursor: pointer;
+}
+.invitation-actions .invitation-continue:disabled {
+    cursor: wait;
+    opacity: 0.7;
+}
+.invitation-help {
+    padding-top: 13px;
+    border-top: 1px solid var(--line);
+    font-size: 13px;
+}
+@media (max-width: 480px) {
+    .invitation-page {
+        padding: 12px;
+    }
+    .invitation-card {
+        padding: 19px;
+    }
+    .invitation-continue {
+        width: 100%;
+    }
+    .invitation-actions {
+        display: grid;
+    }
+}

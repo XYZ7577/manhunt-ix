@@ -1,0 +1,106 @@
+.review-notifications {
+    margin-bottom: 20px;
+}
+.review-updates-toggle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    min-height: 48px;
+    padding: 10px 15px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--surface);
+    color: var(--ink);
+    text-align: left;
+    cursor: pointer;
+    font-weight: 600;
+}
+.review-updates-toggle > span:last-child {
+    margin-left: auto;
+}
+.review-updates-toggle.has-updates {
+    border-color: var(--blue);
+    background: var(--page);
+    color: var(--blue);
+}
+.review-unread-count {
+    min-width: 24px;
+    padding: 3px 7px;
+    border-radius: 6px;
+    background: var(--page);
+    font-size: 12px;
+    text-align: center;
+}
+.review-updates-hint {
+    margin: 7px 4px 0;
+    color: var(--muted);
+    font-size: 13px;
+}
+.review-updates-panel {
+    padding: 16px;
+    margin-top: 8px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--surface);
+}
+.review-inbox-heading,
+.review-update-title {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+}
+.review-inbox-heading h2 {
+    margin: 0;
+}
+.review-update-list {
+    display: grid;
+    gap: 10px;
+    padding: 0;
+    margin: 12px 0 0;
+    list-style: none;
+    max-height: 580px;
+    overflow-y: auto;
+}
+.review-update-list li {
+    padding: 14px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+}
+.review-update-list li.review-update-unread {
+    border-left: 4px solid var(--blue);
+}
+.review-update-title span {
+    font-size: 12px;
+    color: #256940;
+    font-weight: 600;
+}
+.review-update-changes_requested .review-update-title span {
+    color: #a52a55;
+}
+.review-update-list p {
+    margin: 10px 0;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+.review-update-list small {
+    color: var(--muted);
+}
+.review-update-actions {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-top: 10px;
+}
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+}

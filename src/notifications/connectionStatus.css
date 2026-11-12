@@ -1,0 +1,26 @@
+.connection-status {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin: 0 0 16px;
+    font-size: 12px;
+    color: var(--muted);
+}
+.connection-status p {
+    margin: 0;
+}
+.connection-status time {
+    font-variant-numeric: tabular-nums;
+}
+.connection-stale {
+    padding: 12px 14px;
+    border: 1px solid #d5a34e;
+    border-radius: 8px;
+    background: #fff9e8;
+    color: #65430c;
+}
+.connection-status button {
+    flex-shrink: 0;
+}

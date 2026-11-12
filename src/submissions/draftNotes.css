@@ -1,0 +1,30 @@
+.draft-note-editor {
+    display: grid;
+    gap: 6px;
+}
+.draft-save-status {
+    margin: 0;
+    color: var(--muted);
+    font-size: 12px;
+}
+.draft-save-error,
+.draft-save-conflict {
+    color: #8d294b;
+}
+.draft-conflict {
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 12px;
+}
+.draft-conflict p {
+    margin: 0 0 8px;
+}
+.draft-remote-note {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+.draft-conflict > div {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}

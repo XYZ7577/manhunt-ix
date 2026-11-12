@@ -1,0 +1,89 @@
+.push-delivery-status {
+    display: grid;
+    gap: 14px;
+    margin: 0 0 20px;
+    padding: 16px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--surface);
+}
+.push-delivery-heading {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: start;
+    justify-content: space-between;
+    gap: 8px;
+}
+.push-delivery-status h2 {
+    margin: 0 0 5px;
+    font-size: 16px;
+}
+.push-delivery-status h3 {
+    margin: 0 0 8px;
+    font-size: 14px;
+}
+.push-delivery-status p {
+    margin: 0;
+    color: var(--muted);
+    line-height: 1.5;
+}
+.push-delivery-counts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 9px;
+    margin: 0;
+}
+.push-delivery-counts > div {
+    min-width: 100px;
+    padding: 9px 11px;
+    border: 1px solid var(--line);
+    border-radius: 5px;
+}
+.push-delivery-counts dt {
+    color: var(--muted);
+    font-size: 12px;
+}
+.push-delivery-counts dd {
+    margin: 3px 0 0;
+    font-size: 20px;
+    font-weight: 700;
+}
+.push-delivery-counts .push-delivery-count-failed dd,
+.push-delivery-error {
+    color: #a52a55;
+}
+.push-delivery-unknown-note {
+    font-size: 13px;
+}
+.push-delivery-failures ul {
+    display: grid;
+    gap: 8px;
+    padding: 0;
+    margin: 0;
+    list-style: none;
+}
+.push-delivery-failures li {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 9px 11px;
+    border: 1px solid var(--line);
+    border-radius: 5px;
+}
+.push-delivery-failures li span {
+    display: grid;
+    gap: 3px;
+}
+.push-delivery-failures small,
+.push-delivery-failures time {
+    color: var(--muted);
+    font-size: 12px;
+}
+.push-delivery-empty {
+    font-size: 13px;
+}
+.push-delivery-status .text-button {
+    min-height: 32px;
+    padding: 0 6px;
+}

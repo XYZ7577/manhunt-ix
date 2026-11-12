@@ -1,0 +1,409 @@
+.admin-people-settings {
+    display: grid;
+    gap: 16px;
+    padding: 20px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--surface);
+    color: var(--ink);
+}
+.admin-people-heading {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+}
+.admin-people-heading p {
+    margin: 0 0 5px;
+    color: var(--blue);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+}
+.admin-people-heading h2 {
+    margin: 0;
+    font-size: 18px;
+    line-height: 1.3;
+}
+.admin-people-heading span {
+    display: block;
+    margin-top: 5px;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.45;
+}
+.admin-people-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+.admin-people-action {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+    min-height: 72px;
+    padding: 12px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--surface);
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+.admin-people-action:hover,
+.admin-people-action[aria-expanded="true"] {
+    border-color: var(--blue);
+    background: var(--page);
+}
+.admin-people-icon {
+    display: grid;
+    flex: 0 0 38px;
+    width: 38px;
+    height: 38px;
+    place-items: center;
+    border-radius: 6px;
+    background: var(--page);
+    color: var(--blue);
+    font-size: 22px;
+    font-weight: 650;
+}
+.admin-people-action > span:nth-child(2) {
+    display: grid;
+    gap: 4px;
+    min-width: 0;
+}
+.admin-people-action strong {
+    font-size: 13px;
+}
+.admin-people-action small {
+    color: var(--muted);
+    font-size: 11px;
+    line-height: 1.4;
+}
+.admin-people-chevron {
+    margin-left: auto;
+    color: var(--muted);
+    font-size: 21px;
+}
+.admin-people-panel {
+    display: grid;
+    gap: 16px;
+    padding: 18px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--page);
+}
+.admin-people-panel > div:first-child h3 {
+    margin: 0 0 5px;
+    font-size: 16px;
+}
+.admin-people-panel > div:first-child p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.55;
+}
+.admin-create-form {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 13px;
+}
+.admin-create-form > label {
+    display: grid;
+    align-content: start;
+    gap: 6px;
+    color: var(--ink);
+    font-size: 12px;
+    font-weight: 600;
+}
+.admin-create-form > label > input,
+.admin-group-invite select {
+    width: 100%;
+    min-width: 0;
+    min-height: 42px;
+    padding: 9px 11px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--surface);
+    color: var(--ink);
+    font: inherit;
+    font-size: 13px;
+}
+.admin-create-form > label > input:focus,
+.admin-group-invite select:focus,
+.admin-signup-link-row input:focus {
+    border-color: var(--blue);
+    outline: 3px solid var(--blue);
+    outline-offset: 1px;
+}
+.admin-create-form .password-field {
+    min-width: 0;
+}
+.admin-create-form .password-field > label {
+    display: block;
+    margin-bottom: 6px;
+    color: var(--ink);
+    font-size: 12px;
+    font-weight: 600;
+}
+.admin-create-form .password-control input {
+    width: 100%;
+    min-width: 0;
+    min-height: 42px;
+    padding: 9px 54px 9px 11px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--surface);
+    color: var(--ink);
+    font: inherit;
+    font-size: 13px;
+}
+.admin-create-form .password-toggle {
+    min-height: 34px;
+}
+.admin-people-optional {
+    color: var(--muted);
+    font-size: 10px;
+    font-weight: 450;
+}
+.admin-people-primary,
+.admin-people-secondary {
+    min-height: 42px;
+    padding: 9px 13px;
+    border: 1px solid var(--blue);
+    border-radius: 6px;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 650;
+    cursor: pointer;
+}
+.admin-people-primary {
+    grid-column: 1 / -1;
+    justify-self: start;
+    background: var(--blue);
+    color: white;
+}
+.admin-people-primary:hover:not(:disabled) {
+    border-color: var(--blue-hover);
+    background: var(--blue-hover);
+}
+.admin-people-secondary {
+    border-color: var(--line);
+    background: var(--surface);
+    color: var(--ink);
+    white-space: nowrap;
+}
+.admin-signup-share {
+    display: grid;
+    justify-items: start;
+    gap: 9px;
+}
+.admin-signup-share > label,
+.admin-group-invite > label {
+    color: var(--ink);
+    font-size: 12px;
+    font-weight: 600;
+}
+.admin-signup-link-row {
+    display: flex;
+    width: 100%;
+    gap: 8px;
+}
+.admin-signup-link-row input {
+    flex: 1;
+    min-width: 0;
+    min-height: 42px;
+    padding: 9px 11px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--surface);
+    color: var(--ink);
+    font:
+        12px ui-monospace,
+        SFMono-Regular,
+        Consolas,
+        monospace;
+}
+.admin-signup-share img {
+    display: block;
+    width: 192px;
+    height: 192px;
+    padding: 5px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--surface);
+}
+.admin-group-invite {
+    display: grid;
+    gap: 10px;
+    padding-top: 15px;
+    border-top: 1px solid var(--line);
+}
+.admin-group-invite select {
+    max-width: 420px;
+}
+.admin-people-error,
+.admin-people-success {
+    margin: 0;
+    padding: 10px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    line-height: 1.45;
+}
+.admin-people-error {
+    background: #fff0f1;
+    color: #a02a37;
+}
+.admin-people-success {
+    background: #edf8f0;
+    color: #25643b;
+}
+.admin-people-muted {
+    margin: 0;
+    color: var(--muted);
+    font-size: 12px;
+}
+.admin-people-list {
+    display: grid;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+.admin-deletion-controls {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+.admin-deletion-controls label,
+.admin-deletion-confirm > label {
+    display: grid;
+    gap: 7px;
+    color: var(--ink);
+    font-size: 12px;
+    font-weight: 600;
+}
+.admin-deletion-controls select,
+.admin-deletion-confirm input {
+    width: 100%;
+    min-width: 0;
+    min-height: 42px;
+    padding: 9px 11px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--surface);
+    color: var(--ink);
+    font: inherit;
+    font-size: 13px;
+}
+.admin-deletion-controls select:focus,
+.admin-deletion-confirm input:focus {
+    border-color: var(--blue);
+    outline: 3px solid var(--blue);
+    outline-offset: 1px;
+}
+.admin-deletion-confirm {
+    display: grid;
+    gap: 12px;
+    padding: 14px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--surface);
+}
+.admin-deletion-confirm strong {
+    overflow-wrap: anywhere;
+}
+.admin-deletion-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+}
+.admin-people-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 12px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--surface);
+}
+.admin-people-person {
+    display: grid;
+    justify-items: start;
+    gap: 4px;
+    min-width: 0;
+}
+.admin-people-person strong,
+.admin-people-person span {
+    overflow-wrap: anywhere;
+}
+.admin-people-person > span:nth-child(2) {
+    color: var(--muted);
+    font-size: 12px;
+}
+.admin-people-badge {
+    display: inline-flex;
+    align-items: center;
+    min-height: 22px;
+    padding: 1px 7px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    color: var(--muted);
+    font-size: 11px;
+}
+.admin-people-badge.admin {
+    border-color: var(--blue);
+    color: var(--blue);
+}
+.admin-people-protected {
+    flex: 0 0 auto;
+    max-width: 220px;
+    margin: 0;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.4;
+    text-align: right;
+}
+.admin-role-action {
+    flex: 0 0 auto;
+}
+.admin-people-settings button:focus-visible {
+    outline: 3px solid var(--blue);
+    outline-offset: 2px;
+}
+@media (max-width: 600px) {
+    .admin-people-settings {
+        padding: 15px;
+    }
+    .admin-people-actions,
+    .admin-deletion-controls {
+        grid-template-columns: 1fr;
+    }
+    .admin-create-form {
+        grid-template-columns: 1fr;
+    }
+    .admin-people-primary {
+        grid-column: 1;
+        justify-self: stretch;
+    }
+    .admin-signup-link-row {
+        align-items: stretch;
+        flex-direction: column;
+    }
+    .admin-signup-link-row button {
+        align-self: flex-start;
+    }
+    .admin-people-row {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+    .admin-people-protected {
+        max-width: none;
+        text-align: left;
+    }
+    .admin-role-action {
+        align-self: flex-start;
+    }
+}

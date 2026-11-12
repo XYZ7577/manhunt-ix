@@ -1,0 +1,107 @@
+.image-metadata {
+    display: grid;
+    justify-items: start;
+    gap: 8px;
+    min-width: 0;
+    margin-top: 2px;
+}
+
+.image-metadata-toggle {
+    padding: 0;
+    text-align: left;
+}
+.image-metadata-panel {
+    display: grid;
+    gap: 12px;
+    width: 100%;
+    min-width: 0;
+    padding: 12px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--page);
+}
+
+.image-metadata-summary,
+.image-metadata-group dl {
+    display: grid;
+    gap: 10px;
+    margin: 0;
+}
+
+.image-metadata-summary > div,
+.image-metadata-group dl > div {
+    display: grid;
+    grid-template-columns: minmax(105px, 0.65fr) minmax(0, 1.35fr);
+    gap: 8px 12px;
+    min-width: 0;
+}
+
+.image-metadata-summary dt,
+.image-metadata-group dt {
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.45;
+}
+
+.image-metadata-summary dd,
+.image-metadata-group dd {
+    min-width: 0;
+    margin: 0;
+    overflow-wrap: anywhere;
+    font-size: 13px;
+    line-height: 1.45;
+}
+
+.image-metadata-additional {
+    border-top: 1px solid var(--line);
+    padding-top: 10px;
+}
+.image-metadata-additional > summary {
+    color: var(--blue);
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+}
+.image-metadata-sections {
+    display: grid;
+    gap: 14px;
+    padding-top: 12px;
+}
+.image-metadata-group {
+    display: grid;
+    gap: 8px;
+    min-width: 0;
+}
+.image-metadata-group h4 {
+    margin: 0;
+    font-size: 13px;
+}
+.image-metadata-status,
+.image-metadata-notice {
+    margin: 0;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.45;
+}
+.image-metadata-error {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 10px;
+    color: var(--muted);
+    font-size: 12px;
+}
+.image-metadata-error .text-button {
+    padding: 0;
+}
+
+@media (max-width: 480px) {
+    .image-metadata-panel {
+        padding: 10px;
+    }
+    .image-metadata-summary > div,
+    .image-metadata-group dl > div {
+        grid-template-columns: minmax(88px, 0.7fr) minmax(0, 1.3fr);
+        gap: 6px 8px;
+    }
+}

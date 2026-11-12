@@ -1,0 +1,2 @@
+ALTER TABLE evidence ADD COLUMN comment TEXT NOT NULL DEFAULT '';
+ALTER TABLE upload_sessions ADD COLUMN comment TEXT NOT NULL DEFAULT '';

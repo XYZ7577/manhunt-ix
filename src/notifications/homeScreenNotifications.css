@@ -1,0 +1,41 @@
+.home-screen-notifications {
+    display: grid;
+    gap: 12px;
+    margin: 0 0 20px;
+    padding: 16px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--surface);
+}
+.home-screen-notifications h2 {
+    margin: 0 0 5px;
+    font-size: 16px;
+}
+.home-screen-notifications p {
+    margin: 0;
+    color: var(--muted);
+    line-height: 1.5;
+}
+.home-screen-actions,
+.home-screen-install {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 16px;
+}
+.home-screen-install > .hint {
+    flex: 1 1 260px;
+}
+.home-screen-notifications .notification-error {
+    color: #a52a55;
+}
+.home-screen-notifications .notification-test-error {
+    color: #a52a55;
+}
+.home-screen-notifications .notification-test-success {
+    color: var(--blue);
+}
+.home-screen-notifications .text-button {
+    min-height: 32px;
+    padding: 0 6px;
+}

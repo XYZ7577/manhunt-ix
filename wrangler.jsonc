@@ -1,0 +1,39 @@
+{
+    "$schema": "node_modules/wrangler/config-schema.json",
+    "name": "manhunt",
+    "main": "server/index.ts",
+    "compatibility_date": "2026-10-24",
+    "compatibility_flags": ["nodejs_compat"],
+    "keep_vars": true,
+    "assets": {
+        "directory": "./dist",
+        "binding": "ASSETS",
+        "html_handling": "auto-trailing-slash",
+        "not_found_handling": "single-page-application",
+        "run_worker_first": ["/api/*"]
+    },
+    "d1_databases": [
+        {
+            "binding": "DB",
+            "database_name": "manhunt-ix-prod",
+            "database_id": "503a2859-60bf-4593-9ef2-54b4df4895bf"
+        }
+    ],
+    "r2_buckets": [
+        {
+            "binding": "EVIDENCE",
+            "bucket_name": "manhunt-ix-evidence"
+        }
+    ],
+    "vars": {
+        "DEMO_MODE": "false",
+        "ADMIN_GOOGLE_EMAIL": "noreply.manhunt@gmail.com"
+    },
+    "triggers": {
+        "crons": ["0 * * * *", "* * * * *"]
+    },
+    "dev": {
+        "ip": "127.0.0.1",
+        "port": 8787
+    }
+}

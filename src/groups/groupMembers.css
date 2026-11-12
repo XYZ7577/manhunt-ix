@@ -1,0 +1,278 @@
+.group-members-panel {
+    display: grid;
+    gap: 14px;
+    min-width: 0;
+    padding: 18px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--surface);
+}
+.group-members-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 14px;
+}
+.group-members-heading h2 {
+    margin: 0 0 4px;
+}
+.group-members-heading p {
+    margin: 0;
+    color: var(--muted);
+    line-height: 1.45;
+}
+.group-members-list,
+.group-invitations-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+.group-members-list {
+    display: grid;
+}
+.group-members-list > li,
+.group-invitations-list > li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    min-width: 0;
+    padding: 10px 0;
+    border-top: 1px solid var(--line);
+}
+.group-member-identity {
+    display: grid;
+    gap: 3px;
+    min-width: 0;
+}
+.group-member-identity strong,
+.group-invitations-list strong {
+    overflow-wrap: anywhere;
+    font-weight: 500;
+}
+.group-member-identity span,
+.group-invitations-list small {
+    color: var(--muted);
+    font-size: 12px;
+    overflow-wrap: anywhere;
+}
+.group-member-actions {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px;
+}
+.group-member-role {
+    color: var(--muted);
+    font-size: 12px;
+    text-transform: capitalize;
+}
+.group-member-role.is-leader {
+    color: var(--blue);
+    font-weight: 600;
+}
+.group-members-muted {
+    margin: 0;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.5;
+}
+.group-members-management {
+    display: grid;
+    gap: 20px;
+    padding-top: 4px;
+    border-top: 1px solid var(--line);
+}
+.group-members-subsection {
+    display: grid;
+    gap: 8px;
+    min-width: 0;
+}
+.group-members-subsection h3 {
+    margin: 0;
+}
+.group-members-invite-form {
+    display: grid;
+    gap: 7px;
+    max-width: 620px;
+}
+.group-members-invite-form > label {
+    font-weight: 500;
+}
+.group-members-invite-form > div {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.group-members-invite-form input {
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 40px;
+    padding: 8px 10px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--surface);
+    color: var(--ink);
+}
+.group-members-invite-form small {
+    color: var(--muted);
+    font-size: 12px;
+}
+.group-invitations-list {
+    display: grid;
+}
+.group-invitations-list > li > div {
+    display: grid;
+    gap: 3px;
+    min-width: 0;
+}
+.group-leader-confirm {
+    display: grid;
+    gap: 8px;
+    padding: 14px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--page);
+}
+.group-leader-confirm h3 {
+    margin: 0;
+}
+.group-leader-confirm p {
+    margin: 0;
+    color: var(--muted);
+    line-height: 1.5;
+}
+.group-leader-confirm-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+.group-disband-section {
+    display: grid;
+    gap: 8px;
+    padding: 14px;
+    border: 1px solid var(--danger, #a33);
+    border-radius: 6px;
+    background: var(--page);
+}
+.group-disband-section h3,
+.group-disband-section p {
+    margin: 0;
+}
+.group-disband-section > p {
+    color: var(--muted);
+    line-height: 1.5;
+}
+.group-disband-section a {
+    color: var(--blue);
+}
+.group-disband-confirm {
+    display: grid;
+    justify-items: start;
+    gap: 8px;
+}
+.group-disband-ack {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+}
+.group-disband-confirm > label:not(.group-disband-ack) {
+    font-weight: 500;
+}
+.group-disband-confirm input:not([type="checkbox"]) {
+    width: min(100%, 240px);
+    min-height: 40px;
+    padding: 8px 10px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--surface);
+    color: var(--ink);
+}
+.group-disbanded-note {
+    margin: 0;
+    padding: 10px 12px;
+    border-radius: 6px;
+    background: var(--page);
+    color: var(--muted);
+}
+.group-members-panel > .alert {
+    margin: 0;
+}
+.group-invitation-row-content {
+    display: grid;
+    gap: 6px;
+    min-width: 0;
+    flex: 1 1 auto;
+}
+.group-invitation-share {
+    display: grid;
+    justify-items: start;
+    gap: 8px;
+    width: 100%;
+    max-width: 520px;
+    margin-top: 4px;
+    padding: 10px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--page);
+}
+.group-invitation-share p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.45;
+}
+.group-invitation-share img {
+    display: block;
+    width: 192px;
+    height: 192px;
+    padding: 5px;
+    border: 1px solid var(--line);
+    background: var(--surface);
+}
+.group-invitation-link-label {
+    font-size: 12px;
+    font-weight: 600;
+}
+.group-invitation-share input {
+    width: 100%;
+    min-height: 38px;
+    padding: 7px 9px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--surface);
+    color: var(--ink);
+    font:
+        12px/1.4 ui-monospace,
+        SFMono-Regular,
+        Consolas,
+        monospace;
+}
+@media (max-width: 600px) {
+    .group-members-panel {
+        padding: 14px;
+    }
+    .group-members-list > li,
+    .group-invitations-list > li {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+    .group-member-actions {
+        justify-content: flex-start;
+    }
+    .group-members-invite-form > div {
+        align-items: stretch;
+        flex-direction: column;
+    }
+    .group-members-invite-form button {
+        align-self: flex-start;
+    }
+    .group-invitation-row-content {
+        width: 100%;
+    }
+    .group-invitation-share {
+        max-width: none;
+    }
+}

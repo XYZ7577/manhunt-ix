@@ -1,0 +1,121 @@
+.access-page {
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    padding: 28px 16px;
+    background: var(--page);
+    color: var(--ink);
+}
+.access-card {
+    width: min(100%, 470px);
+    padding: clamp(24px, 6vw, 42px);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--surface);
+    text-align: center;
+}
+.access-card > .manhunt-brand {
+    margin-bottom: 32px;
+    text-align: left;
+}
+.access-mark {
+    display: grid;
+    width: 58px;
+    height: 58px;
+    place-items: center;
+    margin: 0 auto 16px;
+    border-radius: 6px;
+    background: var(--page);
+    color: var(--blue);
+    font-size: 30px;
+    font-weight: 700;
+}
+.access-mark-pending {
+    background: #fff4dc;
+    color: #98620d;
+}
+.access-mark-rejected,
+.access-mark-disabled {
+    background: #fff0f1;
+    color: #a83543;
+}
+.access-mark-approved {
+    background: #e9f7ed;
+    color: #18713c;
+}
+.access-card h1 {
+    margin: 0 0 12px;
+    color: var(--ink);
+    font-size: clamp(24px, 6vw, 30px);
+    line-height: 1.2;
+    letter-spacing: -0.03em;
+}
+.access-copy {
+    margin: 0 auto;
+    max-width: 360px;
+    color: var(--muted);
+    font-size: 15px;
+    line-height: 1.6;
+}
+.access-note {
+    margin: 20px 0 0;
+    padding: 13px 15px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--page);
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.55;
+    text-align: left;
+}
+.access-date {
+    margin: 17px 0 0;
+    color: var(--muted);
+    font-size: 12px;
+}
+.access-error {
+    margin: 17px 0 0;
+    padding: 10px;
+    border-radius: 6px;
+    background: #fff0f1;
+    color: #a02a37;
+    font-size: 13px;
+}
+.access-actions {
+    display: grid;
+    gap: 10px;
+    margin-top: 26px;
+}
+.access-primary,
+.access-secondary {
+    min-height: 46px;
+    padding: 10px 16px;
+    border: 1px solid var(--blue);
+    border-radius: 6px;
+    font: inherit;
+    font-weight: 650;
+    cursor: pointer;
+}
+.access-primary {
+    background: var(--blue);
+    color: white;
+}
+.access-primary:hover:not(:disabled) {
+    border-color: var(--blue-hover);
+    background: var(--blue-hover);
+}
+.access-secondary {
+    border-color: var(--line);
+    background: var(--surface);
+    color: var(--ink);
+}
+.access-primary:focus-visible,
+.access-secondary:focus-visible {
+    outline: 3px solid var(--blue);
+    outline-offset: 2px;
+}
+@media (max-width: 420px) {
+    .access-page {
+        padding: 14px;
+    }
+}

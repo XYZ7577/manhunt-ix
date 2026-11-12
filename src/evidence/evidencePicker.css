@@ -1,0 +1,125 @@
+.evidence-picker {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 170px), 1fr));
+    gap: 8px;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+}
+
+.evidence-picker legend {
+    width: 100%;
+    margin-bottom: 2px;
+    padding: 0;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.evidence-picker-option {
+    position: relative;
+    display: grid;
+    align-content: center;
+    gap: 4px;
+    min-height: 62px;
+    min-width: 0;
+    padding: 9px 11px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--surface);
+    cursor: pointer;
+}
+
+.evidence-picker-option:hover {
+    border-color: var(--blue);
+    background: var(--page);
+}
+
+.evidence-picker-option:focus-within {
+    outline: 3px solid var(--blue);
+    outline-offset: 2px;
+}
+
+.evidence-picker-option input[type="file"] {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.evidence-picker-option input[type="file"]:disabled {
+    cursor: not-allowed;
+}
+.evidence-picker-option:has(input:disabled) {
+    cursor: not-allowed;
+    opacity: 0.65;
+}
+.evidence-picker:disabled .evidence-picker-option {
+    background: #e5e7eb;
+    border-color: #d1d5db;
+    color: #6b7280;
+    cursor: not-allowed;
+}
+.evidence-picker-option-title {
+    overflow-wrap: anywhere;
+    font-size: 14px;
+    font-weight: 600;
+}
+.evidence-picker-option-hint {
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+.evidence-picker-help {
+    grid-column: 1 / -1;
+    margin: 0;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.45;
+}
+
+.evidence-preview-link {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+.evidence-preview-link img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.evidence-image-placeholder {
+    display: grid;
+    align-content: center;
+    justify-items: center;
+    gap: 6px;
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+    padding: 8px;
+    text-align: center;
+}
+.evidence-image-placeholder small,
+.evidence-image-placeholder a {
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.35;
+}
+.evidence-image-placeholder .button {
+    min-height: 32px;
+    padding: 5px 8px;
+    font-size: 12px;
+}
+
+@media (max-width: 420px) {
+    .evidence-picker {
+        grid-template-columns: minmax(0, 1fr);
+    }
+    .evidence-picker-option {
+        min-height: 58px;
+    }
+}
